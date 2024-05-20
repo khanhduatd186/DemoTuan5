@@ -1,0 +1,189 @@
+@page "/DemoTuan5/Warehouses"
+
+@attribute [Authorize(DemoTuan5Permissions.Warehouses.Default)]
+@using global::DemoTuan5.Helper
+@using global::DemoTuan5.WarehouseLocations
+@using global::DemoTuan5.Warehouses
+@using global::DemoTuan5.Localization
+@using global::DemoTuan5.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components.Web
+@using Blazorise
+@using Blazorise.Snackbar
+@using Blazorise.Components
+@using Blazorise.DataGrid
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+
+@using global::DemoTuan5.Permissions
+@using Microsoft.AspNetCore.Components
+@using Volo.Abp.AspNetCore.Components.Web
+@using Volo.Abp.Http.Client
+@inherits DemoTuan5ComponentBase
+@inject IWarehousesAppService WarehousesAppService
+@inject IWarehouseLocationsAppService WarehouseLocationsAppService
+
+@inject IUiMessageService UiMessageService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+@inject ShowActionListView ShowActionListView
+@* ************************* PAGE HEADER ************************* *@
+<PageHeader Title="@L["Warehouses"]" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+
+</PageHeader>
+
+@* ************************* SEARCH ************************* *@
+<Card>
+    <CardBody>
+@*//<suite-custom-code-block-1>*@
+@*//</suite-custom-code-block-1>*@
+        <Form id="WarehouseSearchForm" class="mb-3">
+            <Addons>
+                <Addon AddonType="AddonType.Body">
+                    <TextEdit @bind-Text="@Filter.FilterText"
+                              Autofocus="true"
+                              Placeholder="@L["Search"]">
+                    </TextEdit>
+                </Addon>
+                <Addon AddonType="AddonType.End">
+                    <SubmitButton Form="WarehouseSearchForm" Clicked="GetWarehousesAsync">
+                        <Icon Name="IconName.Search" Class="me-1"></Icon>@L["Search"]
+                    </SubmitButton>
+                </Addon>
+            </Addons>
+        </Form>
+        
+        <Row Class="mt-3 mb-3"> 
+            <div class="col-md-12">
+                <a href="javascript:;" class="text-decoration-none" @onclick="() => ShowAdvancedFilters = !ShowAdvancedFilters">@L["SeeAdvancedFilters"]</a>
+            </div>
+        </Row>
+        
+        <div style="display: @(!ShowAdvancedFilters ? "none" : "block")">
+            <Row>
+                <Column ColumnSize="ColumnSize.Is3">
+                    <Field>
+                        <FieldLabel>@L["Code"]</FieldLabel>
+                        <TextEdit Text="@Filter.Code" TextChanged="@((string code) => OnFilterChanged(nameof(Filter.Code), code))" />
+                    </Field>
+                </Column>
+                <Column ColumnSize="ColumnSize.Is3">
+                    <Field>
+                        <FieldLabel>@L["Description"]</FieldLabel>
+                        <TextEdit Text="@Filter.Description" TextChanged="@((string code) => OnFilterChanged(nameof(Filter.Code), code))" />
+                    </Field>
+                </Column>
+                <Column ColumnSize="ColumnSize.Is3">
+                    <Field>
+                        <FieldLabel>@L["Active"]</FieldLabel>
+                        <Select TValue="bool?"
+		SelectedValue="@Filter.Active"
+		SelectedValueChanged="@OnActiveChangedAsync">
+
+<SelectItem></SelectItem>
+<SelectItem Value="true">@L["Yes"]</SelectItem>
+<SelectItem Value="false">@L["No"]</SelectItem>
+
+</Select>                       
+                    </Field>
+                </Column>
+            </Row>
+@*//<suite-custom-code-block-2>*@
+@*//</suite-custom-code-block-2>*@
+        </div>
+@*//<suite-custom-code-block-3>*@
+@*//</suite-custom-code-block-3>*@
+    </CardBody>
+</Card>
+
+@* ************************* DATA GRID ************************* *@
+<Card>
+    <CardBody>
+       
+        <DataGrid TItem="WarehouseDto"
+                  Data="WarehouseList"
+                  ReadData="OnDataGridReadAsync"
+                  TotalItems="TotalCount"
+                  ShowPager="true"
+                  Responsive="true"
+                    ShowPageSizes
+                    PageSizeChanged="ChangePageSize"
+                  SortMode="DataGridSortMode.Single"
+                  SelectedRows="selectedWarehouseDto"
+                  SelectionMode="Blazorise.DataGrid.DataGridSelectionMode.Multiple"
+                  PageSize="PageSize"
+                  SelectedRowsChanged="@((List<WarehouseDto> e) => SelectedChangeRow(e))"
+                  Bordered Resizable ResizeMode="TableResizeMode.Columns">
+            <DataGridColumns>
+                <DataGridMultiSelectColumn TItem="WarehouseDto" Width="30px"></DataGridMultiSelectColumn>
+                <DataGridCommandColumn TItem="WarehouseDto" />
+                <DataGridColumn TItem="WarehouseDto"
+                                Field="Code"
+                                Filterable="false"
+                                Sortable="false"
+                                Caption="#"
+                                Width="10px">
+                    <DisplayTemplate>
+                        @{
+                            @(WarehouseList.ToList().IndexOf(context) + 1)
+                        }
+                    </DisplayTemplate>
+                </DataGridColumn>
+              <DataGridColumn TItem="WarehouseDto"
+                      Field="Code"
+                      Caption="@L["Code"]">
+                    <DisplayTemplate>
+                        @{
+                            string truncatedCode = TruncateText((context as WarehouseDto).Code, 10);
+                            if (context.Code.Length >= 10)
+                            {
+                                <Tooltip Fade="true" Multiline="true" Text="@context.Code" TriggerTargetId="tooltip-custom-target" Inline>
+                                    <a class="d-block text-left" href="javascript:;" @onclick="() => GotoEditPage(context)">@truncatedCode</a>
+                                </Tooltip>
+                            }
+                            else
+                            {
+                                <a class="d-block text-left" href="javascript:;" @onclick="() => GotoEditPage(context)">@truncatedCode</a>
+                            }
+                        }
+                    </DisplayTemplate>
+              </DataGridColumn>
+
+              <DataGridColumn TItem="WarehouseDto"
+                      Field="Description"
+                      Caption="@L["Description"]">
+              </DataGridColumn>
+              <DataGridColumn TItem="WarehouseDto"
+                      Field="Active"
+                      Caption="@L["Active"]">
+                    <DisplayTemplate>
+                        @if (context.Active)
+                        {
+                            <Icon TextColor="TextColor.Success" Name="@IconName.Check" />
+                        }
+                        else
+                        {
+                            <Icon TextColor="TextColor.Danger" Name="@IconName.Times" />
+                        }
+                    </DisplayTemplate>
+              </DataGridColumn>
+
+
+            </DataGridColumns>
+            
+            
+        </DataGrid>
+    </CardBody>
+</Card>
+<SnackbarStack @ref="_uiNotification" Location="SnackbarStackLocation.BottomEnd" />
+
+
+
+
+
+
+
