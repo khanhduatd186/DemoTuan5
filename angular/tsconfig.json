@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.prod.json",
+  "compilerOptions": {
+    "paths": {
+      "@demo-tuan5": ["projects/demo-tuan5/src/public-api.ts"],
+      "@demo-tuan5/config": [
+        "projects/demo-tuan5/config/src/public-api.ts"
+      ],
+      "@proxy": ["projects/demo-tuan5/src/lib/proxy/index.ts"],
+      "@proxy/*": ["projects/demo-tuan5/src/lib/proxy/*"]
+    }
+  }
+}

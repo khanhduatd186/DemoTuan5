@@ -1,0 +1,157 @@
+﻿@page "/DemoTuan5/Warehouses/{Id}"
+@attribute [Authorize(DemoTuan5Permissions.Warehouses.Default)]
+
+
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Localization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+@using Microsoft.Extensions.Configuration
+@* @using Microsoft.AspNetCore.Components.WebAssembly.Authentication *@
+
+@using Blazorise
+@using Blazorise.DataGrid
+@using Blazorise.Components
+
+@using Volo.Abp.Http.Client
+@using Volo.Abp.BlazoriseUI
+@using Volo.Abp.ObjectMapping
+@using Volo.Abp.BlazoriseUI.Components
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Volo.Abp.AspNetCore.Components.Web.Theming.Layout
+
+@using DevExpress.Blazor
+@using global::DemoTuan5.Countries
+@using global::DemoTuan5.Permissions
+@using global::DemoTuan5.WarehouseLocations
+@using global::DemoTuan5.Warehouses
+
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+@inject IUiMessageService UiMessageService
+@inject IPageProgressService PageProgressService
+
+@inherits DemoTuan5ComponentBase
+@inject ICountriesAppService CountriesAppService
+@inject IWarehousesAppService WarehousesAppService
+@inject IWarehouseLocationsAppService WarehouseLocationsAppService
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject NavigationManager NavigationManager
+
+@* ************************* PAGE HEADER ************************* *@
+
+@{
+    string code = string.Empty;
+    if (EditingWarehouse != null && EditingWarehouse.Code != null)
+    {
+        code = EditingWarehouse.Code.Length > 10 ? EditingWarehouse.Code.Substring(0, 10) + "..." : EditingWarehouse.Code;
+    }
+}
+<PageHeader Title="@(code + (IsDataEntryChanged? " (*)":""))" BreadcrumbItems="BreadcrumbItems" Toolbar="Toolbar">
+    <p></p>
+</PageHeader>
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
+
+<Row>
+    <Column>
+        @* ************************* Edit Form Section ************************* *@
+        <Card>
+            <CardBody>
+                <Row>
+                    <EditForm @ref="EditFormMain"
+                              Model="@EditingWarehouse"
+                              Context="EditFormContext">
+                        <DataAnnotationsValidator />
+                        <DxFormLayout CaptionPosition="CaptionPosition.Vertical" CssClass="w-100">
+                            <DxFormLayoutItem Caption="@(L["Code"]+ " *")" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingWarehouse.Code"
+                                           TextExpression="@(() => EditingWarehouse.Code)"
+                                           TextChanged="@((newValue) => {
+                                                            IsDataEntryChanged = true;
+                                                            EditingWarehouse.Code = newValue.ToUpper();
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+                                <ValidationMessage For="@(() => EditingWarehouse.Code)" />
+                            </DxFormLayoutItem>
+
+                            <DxFormLayoutItem Caption="@(L["Description"]+ " *")" ColSpanLg="4" ColSpanMd="12">
+                                <DxTextBox Text="@EditingWarehouse.Description"
+                                           TextExpression="@(() => EditingWarehouse.Description)"
+                                           TextChanged="@((newValue) => {
+                                                            IsDataEntryChanged = true;
+                                                            EditingWarehouse.Description = newValue;
+															})"
+                                           BindValueMode="BindValueMode.OnLostFocus"
+                                           InputCssClass="focus-value"
+                                           ShowValidationIcon="true" />
+
+                                <ValidationMessage For="@(() => EditingWarehouse.Description)" />
+                            </DxFormLayoutItem>
+                            <DxFormLayoutItem Caption="@(L["Active"] + " *")" ColSpanLg="4" ColSpanMd="12">
+                                <DxCheckBox Checked="@EditingWarehouse.Active"
+                                            LabelPosition="LabelPosition.Right"
+                                            Alignment="CheckBoxContentAlignment.Left" 
+                                            CheckedExpression="@(() => EditingWarehouse.Active)"
+                                            CheckedChanged="@((bool newValue) =>  {
+                                                            IsDataEntryChanged = true;
+                                                             EditingWarehouse.Active = newValue;
+                                                            })">
+                                            
+                                </DxCheckBox>
+                            </DxFormLayoutItem>
+                        </DxFormLayout>
+                        <Row>
+                            <Column Padding="Padding.Is3">
+                                @* ************************* DEVEXPRESS DATA GRID ************************* *@
+                                <DxGrid @ref="WarehouseLocationGrid"
+                                        Data="@WarehouseLocationList"
+                                        @bind-SelectedDataItems="@selectedWarehouseLocation"
+                                        SelectionMode="GridSelectionMode.Multiple"
+                                        AllowSelectRowByClick="true"
+                                        EditMode="GridEditMode.EditCell"
+                                        EditNewRowPosition="GridEditNewRowPosition.Top"
+                                        FocusedRowEnabled="true"
+                                        KeyboardNavigationEnabled="true"
+                                        @onkeydown="WarehouseLocationGrid_OnKeyDown"
+                                        EditorRenderMode="GridEditorRenderMode.Integrated"
+                                        EditModelSaving="WarehouseLocationGrid_EditModelSaving"
+                                        CustomizeEditModel="WarehouseLocationGrid_OnCustomizeEditModel"
+                                        FocusedRowChanged="WarehouseLocationGrid_OnFocusedRowChanged"
+                                        CustomizeDataRowEditor="WarehouseLocationGrid_CustomizeDataRowEditor">
+                                    <Columns>
+                                        <DxGridSelectionColumn Width="5%" />
+                                        <DxGridDataColumn FieldName="@nameof(WarehouseLocationUpdateDto.Idx)" Width="5%" Caption="@L["Idx"]" />
+                                        <DxGridDataColumn FieldName="@nameof(WarehouseLocationUpdateDto.Code)" Width="30%" Caption="@L["Code"]" />
+                                        <DxGridDataColumn FieldName="@nameof(WarehouseLocationUpdateDto.Description)" Width="30%" Caption="@L["Description"]" />
+                                        <DxGridDataColumn FieldName="@nameof(WarehouseLocationUpdateDto.CountryId)" Caption="@L["Country"]">
+                                            <EditSettings>
+                                                <DxComboBoxSettings Data="CountriesCollection"
+                                                                    ValueFieldName="Id"
+                                                                    TextFieldName="Code"
+                                                                    FilteringMode="DataGridFilteringMode.Contains"
+                                                                    InputCssClass="focus-value" >
+                                                </DxComboBoxSettings>
+                                            </EditSettings>
+                                        </DxGridDataColumn>
+                                        <DxGridDataColumn FieldName="@nameof(WarehouseLocationUpdateDto.Active)" Caption="@L["Active"]">
+                                            <CellEditTemplate>
+                                                <DxCheckBox  @bind-Checked="((WarehouseLocationUpdateDto)context.EditModel).Active"  />
+                                            </CellEditTemplate>
+                                        </DxGridDataColumn>
+                                    </Columns>
+                                </DxGrid>
+                             <Button Color="Color.Primary" Clicked="BtnAdd_WarehouseLocationGrid_OnClick">Add</Button>
+                             <Button Color="Color.Danger" Clicked="BtnDelete_WarehouseLocationGrid_OnClick">Delete</Button>
+                            </Column>
+                        </Row>
+                    </EditForm>
+                </Row>
+            </CardBody>
+        </Card>
+    </Column>
+</Row>

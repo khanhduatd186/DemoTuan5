@@ -1,0 +1,49 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using DemoTuan5.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using DemoTuan5.Web.Pages.DemoTuan5.WarehouseLocations
+@using DemoTuan5.WarehouseLocations;
+@using System.Globalization
+@inject IHtmlLocalizer<DemoTuan5Resource> L
+@model CreateModalModel
+@{
+    Layout = null;
+}
+
+
+<form data-ajaxForm="true" asp-page="/DemoTuan5/WarehouseLocations/CreateModal" autocomplete="off">
+    <abp-modal id="WarehouseLocationCreateModal">
+        <abp-modal-header title="@L["NewWarehouseLocation"].Value"></abp-modal-header>
+
+        <abp-modal-body>
+@*//<suite-custom-code-block-1>*@
+@*//</suite-custom-code-block-1>*@
+                    
+                    
+
+            <abp-input asp-for="WarehouseLocation.Code"   />
+
+
+            <abp-input asp-for="WarehouseLocation.Description"   />
+
+
+            <abp-input asp-for="WarehouseLocation.Active"   />
+
+
+            <abp-input asp-for="WarehouseLocation.Idx"   />
+
+                                <abp-select asp-for="WarehouseLocation.CountryId" asp-items="Model.CountryLookupList" label="@L["Country"].Value"/>            <abp-select asp-for="WarehouseLocation.WarehouseId" asp-items="Model.WarehouseLookupList" label="@L["Warehouse"].Value"/>
+                
+@*//<suite-custom-code-block-2>*@
+@*//</suite-custom-code-block-2>*@
+@*//<suite-custom-code-block-3>*@
+@*//</suite-custom-code-block-3>*@
+        </abp-modal-body>
+
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel|AbpModalButtons.Save)">
+@*//<suite-custom-code-block-4>*@
+@*//</suite-custom-code-block-4>*@
+        </abp-modal-footer>
+    </abp-modal>
+</form>

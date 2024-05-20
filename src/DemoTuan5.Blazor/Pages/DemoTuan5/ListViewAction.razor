@@ -1,0 +1,55 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Volo.Abp.Http.Client
+@using global::DemoTuan5.Helper
+
+@inherits DemoTuan5ComponentBase
+@inject IRemoteServiceConfigurationProvider RemoteServiceConfigurationProvider
+@inject ShowActionListView ShowActionListView
+
+<div class="nav-link">
+	@if (ShowActionListView.UnreadCount == true)
+	{
+		<Dropdown>
+			<DropdownToggle Color="Color.Primary">
+				Action
+			</DropdownToggle>
+			<DropdownMenu Style="z-index: 1025;">
+				<DropdownItem Clicked="DownloadAsExcelAsync">@L["ExportToExcel"]</DropdownItem>
+				<DropdownDivider />
+				@if (!CanDelete)
+				{
+					<DropdownItem Clicked="Delete">@L["Delete"]</DropdownItem>
+				}
+			</DropdownMenu>
+		</Dropdown>
+	}
+	else
+	{
+		<Button Clicked="New" Color="Color.Primary" Class="btn btn-primary">
+			<Icon Name="IconName.Add" Style="margin-right:5px"></Icon>
+			@L["New"]
+		</Button>
+	}
+</div>
+
+@code {
+
+	[Parameter]
+	public EventCallback DownloadAsExcelAsync { get; set; }
+
+	[Parameter]
+	public EventCallback Delete { get; set; }
+
+	[Parameter]
+	public EventCallback New { get; set; }
+
+	[Parameter]
+	public bool CanDelete { get; set; }
+
+	protected override Task OnInitializedAsync()
+	{
+		ShowActionListView.UnreadCount = false;
+		ShowActionListView.UnreadCountChanged += (s, e) => StateHasChanged();
+		return base.OnInitializedAsync();
+	}
+} 
